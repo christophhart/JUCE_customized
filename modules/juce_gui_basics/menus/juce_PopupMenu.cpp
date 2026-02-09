@@ -32,6 +32,10 @@ namespace PopupMenuSettings
     const int dismissCommandId = 0x6287345f;
 
     static bool menuWasHiddenBecauseOfAppChange = false;
+    
+    // When true, PopupMenu will skip focus and inputAttemptWhenModal checks
+    // This is used for synthetic UI testing where mouse events are injected programmatically
+    static bool syntheticInputMode = false;
 }
 
 //==============================================================================
@@ -616,6 +620,11 @@ struct MenuWindow  : public Component
 
     void inputAttemptWhenModal() override
     {
+        // In synthetic input mode, skip the modal input check entirely
+        // This prevents popup dismissal during programmatic UI testing
+        if (PopupMenuSettings::syntheticInputMode)
+            return;
+        
         WeakReference<Component> deletionChecker (this);
 
         for (auto* ms : mouseSourceStates)
@@ -1352,11 +1361,16 @@ private:
     void checkButtonState (Point<int> localMousePos, const uint32 timeNow,
                            const bool wasDown, const bool overScrollArea, const bool isOverAny)
     {
+        auto currentMods = ModifierKeys::currentModifiers;
+        auto realtimeMods = ComponentPeer::getCurrentModifiersRealtime();
+        
         isDown = window.hasBeenOver
-                    && (ModifierKeys::currentModifiers.isAnyMouseButtonDown()
-                         || ComponentPeer::getCurrentModifiersRealtime().isAnyMouseButtonDown());
+                    && (currentMods.isAnyMouseButtonDown()
+                         || realtimeMods.isAnyMouseButtonDown());
 
-        if (! window.doesAnyJuceCompHaveFocus())
+
+        // In synthetic input mode, skip the focus check to prevent dismissal during UI testing
+        if (! PopupMenuSettings::syntheticInputMode && ! window.doesAnyJuceCompHaveFocus())
         {
             if (timeNow > window.lastFocusedTime + 10)
             {
@@ -2167,6 +2181,34 @@ bool JUCE_CALLTYPE PopupMenu::dismissAllActiveMenus()
     }
 
     return numWindows > 0;
+}
+
+void JUCE_CALLTYPE PopupMenu::setSyntheticInputMode (bool enabled)
+{
+    PopupMenuSettings::syntheticInputMode = enabled;
+}
+
+Array<PopupMenu::VisibleMenuItem> JUCE_CALLTYPE PopupMenu::getVisibleMenuItems()
+{
+    Array<VisibleMenuItem> results;
+    
+    for (auto* window : HelperClasses::MenuWindow::getActiveWindows())
+    {
+        for (auto* itemComp : window->items)
+        {
+            // Skip separators and section headers (itemID == 0)
+            if (itemComp->item.itemID != 0 && !itemComp->item.isSeparator && !itemComp->item.isSectionHeader)
+            {
+                results.add ({
+                    itemComp->item.text,
+                    itemComp->item.itemID,
+                    itemComp->getScreenBounds()
+                });
+            }
+        }
+    }
+    
+    return results;
 }
 
 //==============================================================================

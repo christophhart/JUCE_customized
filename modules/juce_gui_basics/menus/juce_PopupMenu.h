@@ -736,6 +736,34 @@ public:
     */
     static bool JUCE_CALLTYPE dismissAllActiveMenus();
 
+    /** Enables or disables synthetic input mode for UI testing.
+    
+        When enabled, PopupMenu will skip focus checks and inputAttemptWhenModal handling
+        that would otherwise cause the menu to dismiss during programmatic mouse event injection.
+        This is used for automated UI testing where mouse events are injected synthetically.
+    */
+    static void JUCE_CALLTYPE setSyntheticInputMode (bool enabled);
+
+    //==============================================================================
+    /** Information about a visible menu item in an open popup menu.
+        Used for programmatic menu item selection in UI testing.
+    */
+    struct VisibleMenuItem
+    {
+        String text;                    /**< The menu item's display text. */
+        int itemId = 0;                 /**< The menu item's ID. */
+        Rectangle<int> screenBounds;    /**< The item's bounds in screen coordinates. */
+    };
+    
+    /** Get all currently visible menu items from open popup menus.
+    
+        Searches all active popup menu windows and returns information about each
+        visible menu item, including its text, ID, and screen bounds.
+        This is used for automated UI testing to find and click menu items.
+        
+        @returns Array of VisibleMenuItem structs for all items in open menus
+    */
+    static Array<VisibleMenuItem> JUCE_CALLTYPE getVisibleMenuItems();
 
     //==============================================================================
     /** Specifies a look-and-feel for the menu and any sub-menus that it has.

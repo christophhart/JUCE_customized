@@ -94,8 +94,12 @@ public:
 
     Point<float> getRawScreenPosition() const noexcept
     {
-        return unboundedMouseOffset + (inputType != MouseInputSource::InputSourceType::touch ? MouseInputSource::getCurrentRawMousePosition()
-                                                                                             : lastScreenPos);
+        // When syntheticPositionMode is enabled (or for touch input), use lastScreenPos
+        // instead of querying the real OS cursor position. This is used for UI testing.
+        if (inputType == MouseInputSource::InputSourceType::touch || syntheticPositionMode)
+            return unboundedMouseOffset + lastScreenPos;
+        
+        return unboundedMouseOffset + MouseInputSource::getCurrentRawMousePosition();
     }
 
     void setScreenPosition (Point<float> p)
@@ -516,6 +520,7 @@ public:
     float tiltY = 0;
 
     bool isUnboundedMouseModeOn = false, isCursorVisibleUntilOffscreen = false;
+    bool syntheticPositionMode = false;
 
 private:
     WeakReference<Component> componentUnderMouse, lastNonInertialWheelTarget;
@@ -653,6 +658,9 @@ const Point<float> MouseInputSource::offscreenMousePos { -10.0f, -10.0f };
 
 // Deprecated method
 bool MouseInputSource::hasMouseMovedSignificantlySincePressed() const noexcept  { return pimpl->hasMouseMovedSignificantlySincePressed(); }
+
+void MouseInputSource::setSyntheticPositionMode (bool enabled) const  { pimpl->syntheticPositionMode = enabled; }
+bool MouseInputSource::isSyntheticPositionModeEnabled() const         { return pimpl->syntheticPositionMode; }
 
 //==============================================================================
 struct MouseInputSource::SourceList  : public Timer

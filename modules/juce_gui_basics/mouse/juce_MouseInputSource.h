@@ -221,6 +221,14 @@ public:
     /** Attempts to set this mouse pointer's screen position. */
     void setScreenPosition (Point<float> newPosition);
 
+    /** Enables synthetic position mode where getScreenPosition() returns the last
+        injected position instead of querying the real OS cursor.
+        This is used for automated UI testing. */
+    void setSyntheticPositionMode (bool enabled) const;
+
+    /** Returns true if synthetic position mode is enabled. */
+    bool isSyntheticPositionModeEnabled() const;
+
     /** A default value for pressure, which is used when a device doesn't support it, or for
         mouse-moves, mouse-ups, etc.
     */
@@ -250,6 +258,8 @@ public:
     bool hasMouseMovedSignificantlySincePressed() const noexcept;
    #endif
 
+    static void setRawMousePosition(Point<float>);
+
 private:
     //==============================================================================
     friend class ComponentPeer;
@@ -265,7 +275,7 @@ private:
     void handleMagnifyGesture (ComponentPeer&, Point<float>, int64 time, float scaleFactor);
 
     static Point<float> getCurrentRawMousePosition();
-    static void setRawMousePosition (Point<float>);
+    
 
     JUCE_LEAK_DETECTOR (MouseInputSource)
 };

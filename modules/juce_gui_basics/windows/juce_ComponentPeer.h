@@ -418,6 +418,13 @@ public:
     */
     virtual void setHasChangedSinceSaved (bool) {}
 
+    //==============================================================================
+    /** Hook for overriding the realtime modifiers returned by getCurrentModifiersRealtime().
+        Used for synthetic mouse event injection during UI testing.
+        When set to a valid function, it will be called instead of querying the OS.
+    */
+    static std::function<ModifierKeys()> getNativeRealtimeModifiers;
+
 protected:
     //==============================================================================
     static void forceDisplayUpdate();
@@ -426,7 +433,6 @@ protected:
     const int styleFlags;
     Rectangle<int> lastNonFullscreenBounds;
     ComponentBoundsConstrainer* constrainer = nullptr;
-    static std::function<ModifierKeys()> getNativeRealtimeModifiers;
     ListenerList<ScaleFactorListener> scaleFactorListeners;
 
 private:
