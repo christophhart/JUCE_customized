@@ -2188,11 +2188,21 @@ void JUCE_CALLTYPE PopupMenu::setSyntheticInputMode (bool enabled)
     PopupMenuSettings::syntheticInputMode = enabled;
 }
 
-Array<PopupMenu::VisibleMenuItem> JUCE_CALLTYPE PopupMenu::getVisibleMenuItems()
+Array<PopupMenu::VisibleMenuItem> JUCE_CALLTYPE PopupMenu::getVisibleMenuItems(Component* anyComponent)
 {
     Array<VisibleMenuItem> results;
     
-    for (auto* window : HelperClasses::MenuWindow::getActiveWindows())
+    Array<HelperClasses::MenuWindow*> currentWindows;
+
+    auto root = anyComponent->getTopLevelComponent();
+
+    Component::callRecursive<HelperClasses::MenuWindow>(root, [&](HelperClasses::MenuWindow* mw)
+    {
+        currentWindows.add(mw);
+        return false;
+    });
+
+    for (auto window : currentWindows)
     {
         for (auto* itemComp : window->items)
         {

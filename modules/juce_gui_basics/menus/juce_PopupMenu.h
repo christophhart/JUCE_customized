@@ -763,7 +763,7 @@ public:
         
         @returns Array of VisibleMenuItem structs for all items in open menus
     */
-    static Array<VisibleMenuItem> JUCE_CALLTYPE getVisibleMenuItems();
+    static Array<VisibleMenuItem> JUCE_CALLTYPE getVisibleMenuItems(Component* anyComponent);
 
     //==============================================================================
     /** Specifies a look-and-feel for the menu and any sub-menus that it has.
