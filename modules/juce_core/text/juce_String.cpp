@@ -214,9 +214,9 @@ private:
                     - (reinterpret_cast<size_t> (reinterpret_cast<StringHolder*> (128)->text) - 128));
     }
 
-    static bool isEmptyString (StringHolder* other)
+    static bool isEmptyString (StringHolder* other) noexcept
     {
-        return (other->refCount.get() & 0x30000000) != 0;
+        return reinterpret_cast<const void*> (other) == static_cast<const void*> (&emptyString);
     }
 
     void compileTimeChecks()
