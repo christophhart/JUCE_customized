@@ -233,7 +233,8 @@ public:
 
                 s.add ("JUCE_BUNDLEDIR_" + var + " := " + escapeQuotesAndSpaces (bundleDir));
                 s.add ("JUCE_TARGET_"    + var + " := " + escapeQuotesAndSpaces (bundleDir) + "/Contents/MacOS/" + escapeQuotesAndSpaces (strippedName));
-                s.add ("JUCE_PLIST_"     + var + " := " + "Info-" + escapeQuotesAndSpaces (getTargetVarName()) + ".plist");
+                s.add ("JUCE_PLIST_"     + var + " := " + "Info-" + escapeQuotesAndSpaces (getTargetVarName())
+                                                        + "-" + escapeQuotesAndSpaces (config.getName()) + ".plist");
             }
             else
             {
@@ -1162,22 +1163,28 @@ protected:
         if (icons.big || icons.small)
             iconFile = getTargetFolder().getChildFile ("Icon.icns");
 
-        for (auto* target : targets)
+        for (ConstConfigIterator c (*this); c.next();)
         {
-            auto* macTarget = dynamic_cast<const MacMakefileTarget*> (target);
-            if (macTarget == nullptr || ! macTarget->isBundled())
-                continue;
+            for (auto* target : targets)
+            {
+                auto* macTarget = dynamic_cast<const MacMakefileTarget*> (target);
+                if (macTarget == nullptr || ! macTarget->isBundled())
+                    continue;
 
-            writePlistForTarget (*macTarget, iconFile);
+                writePlistForTargetAndConfig (*macTarget, *c, iconFile);
+            }
         }
     }
 
-    void writePlistForTarget (const MacMakefileTarget& target, const File& iconFile) const
+    void writePlistForTargetAndConfig (const MacMakefileTarget& target, const BuildConfiguration& config, const File& iconFile) const
     {
         build_tools::PlistOptions options;
 
+        auto binaryName = replacePreprocessorTokens (config, config.getTargetBinaryNameString())
+                            .upToLastOccurrenceOf (".", false, false);
+
         options.type                    = target.type;
-        options.executableName          = project.getProjectFilenameRootString();
+        options.executableName          = binaryName;
         options.bundleIdentifier        = getBundleIdentifierForTarget (target.type);
         options.plistToMerge            = plistToMergeValue.get().toString();
         options.iOS                     = false;
@@ -1203,7 +1210,7 @@ protected:
         options.pluginCode              = project.getPluginCodeString();
         options.versionAsHex            = project.getVersionAsHexInteger();
 
-        options.write (getTargetFolder().getChildFile ("Info-" + target.getTargetVarName() + ".plist"));
+        options.write (getTargetFolder().getChildFile ("Info-" + target.getTargetVarName() + "-" + config.getName() + ".plist"));
     }
 
     String getBundleIdentifierForTarget (build_tools::ProjectType::Target::Type t) const
